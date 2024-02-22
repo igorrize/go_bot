@@ -3,6 +3,8 @@ package services
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/igorrize/go_bot/internal/app/commands"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -32,6 +34,10 @@ func HandleNavigationCallbackQuery(messageId int, bot *tgbotapi.BotAPI, chatId i
 			SendSearchData(data[4:], previousPage, itemsPerPage, maxPages, &messageId, chatId, bot)
 		}
 	}
+	if pagerType == "tldr" {
+		commander := commands.NewComander(bot)
+		commander.Short(&messageId, chatId, data[4:])
+	}
 }
 
 func SendSearchData(data []string, currentPage, maxPages, count int, messageId *int, chatId int64, bot *tgbotapi.BotAPI) {
@@ -54,15 +60,19 @@ func SendSearchData(data []string, currentPage, maxPages, count int, messageId *
 
 func SearchDataTextMarkup(data []string, currentPage, count, maxPages  int) (text string, markup tgbotapi.InlineKeyboardMarkup) {
 	text = strings.Join(data[currentPage*count:currentPage*count+count], "\n")
-
+	log.Printf("ALERT")
 	var rows []tgbotapi.InlineKeyboardButton
 	if currentPage > 0 {
+	log.Printf("pager:prev:%d:%d", currentPage, count)
 		rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("Previous", fmt.Sprintf("pager:prev:%d:%d", currentPage, count)))
 	}
 	if currentPage < maxPages-1 {
+		log.Printf("pager:next:%d:%d", currentPage, count)
+
 		rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("Next", fmt.Sprintf("pager:next:%d:%d", currentPage, count)))
 	}
 
+	rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("tldr", fmt.Sprintf("pager:next:%d:%d", currentPage, count)))
 	markup = tgbotapi.NewInlineKeyboardMarkup(rows)
 	return
 }

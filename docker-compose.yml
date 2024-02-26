@@ -4,9 +4,9 @@ services:
   go_bot:
     image: go_bot_image
     environment:
-      - "TELEGA_TOKEN=6494268029:AAFynGSIs4CCOZrDEsZpsWZElUctsZa44-w"
-      - "API_KEY=3ba6283321msh80a967930e01301p13ea9fjsna2afafa73bdc"
-      - "HOST=mashape-community-urban-dictionary.p.rapidapi.com"
+      - "TELEGA_TOKEN=$TELEGA_TOKEN"
+      - "API_KEY=$API_KEY"
+      - "HOST=$HOST"
     build:
       context: .
       dockerfile: Dockerfile

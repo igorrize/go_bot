@@ -1,6 +1,13 @@
 version: '3'
 
 services:
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+  
   go_bot:
     image: go_bot_image
     environment:
@@ -14,13 +21,6 @@ services:
       - "8080:8080"
     depends_on:
       - redis
-
-  redis:
-    image: "redis:latest"
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
 
 volumes:
   redis_data:

@@ -4,6 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/igorrize/go_bot/internal/app/commands"
 	"github.com/igorrize/go_bot/internal/services"
+	"github.com/igorrize/go_bot/internal/storage"
 	"log"
 	"os"
 )
@@ -30,18 +31,17 @@ func main() {
 			log.Panic(err)
 		}
 
-	commander := commands.NewComander(bot)
+		redisClient := storage.InitRedisClient()
+
+		defer storage.CloseRedisClient(redisClient)
+
+		commander := commands.NewComander(bot)
 
 		for update := range updates {
-			if update.Message == nil {
-				continue
-			}
 			if update.CallbackQuery != nil {
-				services.CallbackQueryHandler(update.CallbackQuery, bot, update.Message.Chat.ID)
+				services.CallbackQueryHandler(update.CallbackQuery, bot, update.CallbackQuery.Message.Chat.ID)
 				continue
-			}
-
-			if update.Message.IsCommand() {
+			} else if update.Message.IsCommand() {
 				switch update.Message.Command() {
 				case "help":
 					commander.Help(update.Message)
@@ -56,5 +56,7 @@ func main() {
 				}
 			}
 		}
+
+
 }
 

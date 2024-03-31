@@ -1,6 +1,7 @@
 package ud_client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ func NewUDClient(apiKey, host string) *Client {
 	}
 }
 
-func (c *Client) DefineTerm(term string) ([]string, error) {
+func (c *Client) DefineTerm(ctx context.Context, term string) ([]string, error) {
 	url := fmt.Sprintf("https://mashape-community-urban-dictionary.p.rapidapi.com/define?term=%s", term)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -39,6 +40,7 @@ func (c *Client) DefineTerm(term string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {

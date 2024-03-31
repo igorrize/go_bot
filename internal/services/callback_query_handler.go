@@ -5,7 +5,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/igorrize/go_bot/internal/app/commands"
 	"github.com/igorrize/go_bot/internal/storage"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -22,32 +21,30 @@ func HandleNavigationCallbackQuery(messageId int, bot *tgbotapi.BotAPI, chatId i
 	pagerType := data[0]
 	maxPages, _ := strconv.Atoi(data[3])
 	currentPage, _ := strconv.Atoi(data[1])
-	itemsPerPage := 1
-	log.Printf("max pages1"+strconv.Itoa(maxPages))
 
 	redisData := storage.GetKey(data[2])
 	searchData := strings.Split(redisData,"|")
 	if pagerType == "next" {
 		nextPage := currentPage + 1
 		if nextPage < maxPages {
-			SendSearchData(searchData, nextPage, maxPages, itemsPerPage, &messageId, chatId, bot, data[2])
+			SendSearchData(searchData, nextPage, maxPages, &messageId, chatId, bot, data[2])
 		}
 	}
 	if pagerType == "prev" {
 		previousPage := currentPage - 1
 		if previousPage >= 0 {
-			SendSearchData(searchData, previousPage, maxPages, itemsPerPage, &messageId, chatId, bot, data[2])
+			SendSearchData(searchData, previousPage, maxPages, &messageId, chatId, bot, data[2])
 		}
 	}
 	if pagerType == "tldr" {
 		commander := commands.NewComander(bot)
-		commander.Short(&messageId, chatId, data[4:])
+		commander.Short(&messageId, chatId, data[2])
 	}
 }
 
-func SendSearchData(data []string, currentPage, maxPages, count int, messageId *int, chatId int64, bot *tgbotapi.BotAPI, redisKey string) {
+func SendSearchData(data []string, currentPage, maxPages int, messageId *int, chatId int64, bot *tgbotapi.BotAPI, redisKey string) {
 
-	text, keyboard := SearchDataTextMarkup(data, currentPage, count, maxPages, redisKey)
+	text, keyboard := SearchDataTextMarkup(data, currentPage, maxPages, redisKey)
 
     var cfg tgbotapi.Chattable
     if messageId == nil {
@@ -63,7 +60,7 @@ func SendSearchData(data []string, currentPage, maxPages, count int, messageId *
 	bot.Send(cfg)
 }
 
-func SearchDataTextMarkup(data []string, currentPage, count, maxPages int, redisKey string) (text string, markup tgbotapi.InlineKeyboardMarkup) {
+func SearchDataTextMarkup(data []string, currentPage, maxPages int, redisKey string) (text string, markup tgbotapi.InlineKeyboardMarkup) {
 	text = data[currentPage]
 	var rows []tgbotapi.InlineKeyboardButton
 
@@ -77,7 +74,8 @@ func SearchDataTextMarkup(data []string, currentPage, count, maxPages int, redis
 		rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("Next Definition", buttonData))
 	}
 
-	rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("tldr", fmt.Sprintf("pager:next:%d:%d", currentPage, count)))
+	tldrData := fmt.Sprintf("pager:tldr:%d:%s:%d", currentPage, redisKey, maxPages)
+	rows = append(rows, tgbotapi.NewInlineKeyboardButtonData("tldr", tldrData))
 	markup = tgbotapi.NewInlineKeyboardMarkup(rows)
 	return
 }

@@ -3,14 +3,14 @@ package ud_client
 import (
 	"encoding/json"
 	"fmt"
-	_ "fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
 
 type TLDRClient interface {
-	ShortDefinitions(defs []string) error
+	ShortDefinitions(longData string) error
 }
 
 type ShortClient struct {
@@ -25,16 +25,16 @@ func NewShortClient(apiKey, host string) *ShortClient {
 	}
 }
 
-func (c *ShortClient) ShortDefinitions(defs []string) (string, error) {
+func (c *ShortClient) ShortDefinitions(longData string) (string, error) {
 
 	url := "https://tldrthis.p.rapidapi.com/v1/model/abstractive/summarize-text/"
-	text := strings.Join(defs, ",")
-	payload := strings.NewReader(fmt.Sprintf(`{"text": "%s"}`, text))
+
+	payload := strings.NewReader(fmt.Sprintf(`{"text": "%s"}`, longData))
 
 	req, _ := http.NewRequest("POST", url, payload)
 
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("X-RapidAPI-Key", "3ba6283321msh80a967930e01301p13ea9fjsna2afafa73bdc")
+	req.Header.Add("X-RapidAPI-Key", c.apiKey)
 	req.Header.Add("X-RapidAPI-Host", "tldrthis.p.rapidapi.com")
 
 	res, _ := http.DefaultClient.Do(req)
@@ -53,12 +53,11 @@ func (c *ShortClient) ShortDefinitions(defs []string) (string, error) {
 		return "err", nil
 	}
 
-	// Извлечение значения summary
 	summary, ok := data["summary"].(string)
 	if !ok {
 		return "err", nil
 	}
-
 	return summary, nil
 
 }
+

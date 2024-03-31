@@ -23,7 +23,6 @@ func SetKey(key, value string) error {
 	if RedisClient == nil {
 		return redis.Nil
 	}
-
 	err := RedisClient.Set(ctx, key, value, 0).Err()
 	return err
 }

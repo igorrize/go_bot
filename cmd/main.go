@@ -24,39 +24,27 @@ func main() {
 
 	u := tgbotapi.UpdateConfig{
 		Timeout: 60,
+	}
+
+	updates := bot.GetUpdatesChan(u)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	redisClient := storage.InitRedisClient()
+
+	defer storage.CloseRedisClient(redisClient)
+
+	commander := commands.NewComander(bot)
+
+	for update := range updates {
+		if update.CallbackQuery != nil {
+			services.CallbackQueryHandler(update.CallbackQuery, bot, update.CallbackQuery.Message.Chat.ID)
+			continue
 		}
 
-		updates := bot.GetUpdatesChan(u)
-		if err != nil {
-			log.Panic(err)
+		if update.Message.IsCommand() {
+			commander.HandleCommand(update.Message)
 		}
-
-		redisClient := storage.InitRedisClient()
-
-		defer storage.CloseRedisClient(redisClient)
-
-		commander := commands.NewComander(bot)
-
-		for update := range updates {
-			if update.CallbackQuery != nil {
-				services.CallbackQueryHandler(update.CallbackQuery, bot, update.CallbackQuery.Message.Chat.ID)
-				continue
-			} else if update.Message.IsCommand() {
-				switch update.Message.Command() {
-				case "help":
-					commander.Help(update.Message)
-					case "search":
-						commander.Search(update.Message)
-						default:
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "I don't know that command")
-							_, err := bot.Send(msg)
-							if err != nil {
-								log.Fatal("Something went wrong")
-							}
-				}
-			}
-		}
-
-
+	}
 }
-
